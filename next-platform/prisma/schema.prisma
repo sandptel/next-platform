@@ -1,0 +1,54 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  password      String
+  name          String?
+  is_active     Boolean   @default(true)
+  is_staff      Boolean   @default(false)
+  date_joined   DateTime  @default(now())
+
+  ownedGroups   Group[]   @relation("GroupOwner")
+  joinedGroups  Group[]   @relation("GroupMembers")
+}
+
+model Group {
+  id            String    @id @default(cuid())
+  group_name    String
+  access_code   String    @unique
+  ownerId       String
+  owner         User      @relation("GroupOwner", fields: [ownerId], references: [id])
+  
+  members       User[]    @relation("GroupMembers")
+  projects      Project[]
+}
+
+model Project {
+  id            String    @id @default(cuid())
+  project_name  String
+  created_at    DateTime  @default(now())
+  groupId       String
+  group         Group     @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  
+  code          Code?
+}
+
+model Code {
+  id            String    @id @default(cuid())
+  content       String    @default("")
+  updated_at    DateTime  @updatedAt
+  
+  projectId     String    @unique
+  project       Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
